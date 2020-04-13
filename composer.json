@@ -25,10 +25,5 @@
     "psr-4": {
       "Xtendable\\MailAttachment\\": ""
     }
-  },
-    "extra": {
-        "branch-alias": {
-            "1.0.0": "stable-dev"
-        }
   }
 }

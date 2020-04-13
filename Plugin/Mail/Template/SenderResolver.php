@@ -1,17 +1,10 @@
 <?php
 
 /**
- * Xtendable_MailAttachment for Magento 2
+ * Xtendable_MailAttachment
  *
- * The extension module for \Magento\Framework\Mail
- *
- * @version     1.0.0, last modified Oct 2018
- * @author      Didi Kusnadi<jalapro08@gmail.com>
- *
- * @license     https://www.gnu.org/licenses/gpl-3.0.en.html GNU GPLv3
- *
- * @copyright   Copyright © 2017 Kemana. All rights reserved.
- * @link        http://www.kemana.com Driving Digital Commerce
+ * @see    README.md
+ * @author Didi Kusnadi<jalapro08@gmail.com>
  *
  */
 
