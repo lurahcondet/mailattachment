@@ -23,11 +23,15 @@ use Magento\Framework\Mail\MessageInterfaceFactory;
 use Magento\Framework\Mail\MimeInterface;
 use Magento\Framework\Mail\MimeMessageInterfaceFactory;
 use Magento\Framework\Mail\MimePartInterfaceFactory;
+use Magento\Framework\Mail\Template\FactoryInterface;
+use Magento\Framework\Mail\Template\SenderResolverInterface;
 use Magento\Framework\Mail\TemplateInterface;
 use Magento\Framework\Mail\TransportInterface;
 use Magento\Framework\Mail\TransportInterfaceFactory;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Phrase;
+use Zend\Mime\Mime;
+use Zend\Mime\PartFactory;
 
 /**
  * TransportBuilder
@@ -36,7 +40,7 @@ use Magento\Framework\Phrase;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @since 100.0.2
  */
-class TransportBuilder
+class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
 {
     /**
      * Template Identifier
@@ -90,7 +94,7 @@ class TransportBuilder
     /**
      * Message
      *
-     * @var MessageInterface
+     * @var EmailMessageInterface
      */
     protected $message;
 
@@ -133,6 +137,10 @@ class TransportBuilder
      */
     private $addressConverter;
 
+    protected $attachments = [];
+
+    protected $partFactory;
+
     /**
      * TransportBuilder constructor
      *
@@ -173,6 +181,19 @@ class TransportBuilder
             ->get(MimePartInterfaceFactory::class);
         $this->addressConverter = $addressConverter ?: $this->objectManager
             ->get(AddressConverter::class);
+        $this->partFactory = $objectManager->get(PartFactory::class);
+        parent::__construct(
+            $templateFactory,
+            $message,
+            $senderResolver,
+            $objectManager,
+            $mailTransportFactory,
+            $messageFactory,
+            $emailMessageInterfaceFactory,
+            $mimeMessageInterfaceFactory,
+            $mimePartInterfaceFactory,
+            $addressConverter
+        );
     }
 
     /**
@@ -252,22 +273,6 @@ class TransportBuilder
     public function setFrom($from)
     {
         return $this->setFromByScope($from);
-    }
-
-    /**
-     * add attachment
-     * @param string $file
-     * @param string $name
-     */
-    public function addAttachment($file, $name)
-    {
-        if (!empty($file) && file_exists($file)) {
-            if (!isset($this->messageData['attachment'])) {
-                $this->messageData['attachment'] = [];
-            }
-            $this->messageData['attachment'][] = ['content' => file_get_contents($file), 'name' => $name];
-        }
-        return $this;
     }
 
     /**
@@ -400,7 +405,6 @@ class TransportBuilder
     {
         $template = $this->getTemplate();
         $content = $template->processTemplate();
-
         switch ($template->getType()) {
             case TemplateTypesInterface::TYPE_TEXT:
                 $part['type'] = MimeInterface::TYPE_TEXT;
@@ -415,39 +419,17 @@ class TransportBuilder
                     new Phrase('Unknown template type')
                 );
         }
-
-        /** @var \Magento\Framework\Mail\MimePartInterface $mimePart */
         $mimePart = $this->mimePartInterfaceFactory->create(['content' => $content]);
-        $this->messageData['encoding'] = $mimePart->getCharset();
+        $parts = count($this->attachments) ? array_merge([$mimePart], $this->attachments) : [$mimePart];
         $this->messageData['body'] = $this->mimeMessageInterfaceFactory->create(
-            ['parts' => [$mimePart]]
+            ['parts' => $parts]
         );
 
         $this->messageData['subject'] = html_entity_decode(
             (string)$template->getSubject(),
             ENT_QUOTES
         );
-
-        $attachments = null;
-        if ($this->messageData['attachment']) {
-            $attachments = $this->messageData['attachment'];
-            unset($this->messageData['attachment']);
-        }
-
         $this->message = $this->emailMessageInterfaceFactory->create($this->messageData);
-
-        if ($attachments) {
-            foreach ($attachments as $attachment) {
-                $this->message
-                ->createAttachment(
-                    file_get_contents($attachment['content']),
-                    \Zend_Mime::TYPE_OCTETSTREAM,
-                    \Zend_Mime::DISPOSITION_ATTACHMENT,
-                    \Zend_Mime::ENCODING_BASE64,
-                    basename($attachment['name'])
-                );
-            }
-        }
 
         return $this;
     }
@@ -474,8 +456,25 @@ class TransportBuilder
                 $this->messageData[$addressType],
                 $convertedAddressArray
             );
-        } else {
-            $this->messageData[$addressType] = $convertedAddressArray;
         }
+    }
+
+    /**
+     * @param string|null $content
+     * @param string|null $fileName
+     * @param string|null $fileType
+     * @return TransportBuilder
+     */
+    public function addAttachment(?string $content, ?string $fileName, ?string $fileType)
+    {
+        $attachmentPart = $this->partFactory->create();
+        $attachmentPart->setContent($content)
+            ->setType($fileType)
+            ->setFileName($fileName)
+            ->setDisposition(Mime::DISPOSITION_ATTACHMENT)
+            ->setEncoding(Mime::ENCODING_BASE64);
+        $this->attachments[] = $attachmentPart;
+
+        return $this;
     }
 }
