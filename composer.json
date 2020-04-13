@@ -1,11 +1,11 @@
 {
   "name": "xtendable/mail-attachment",
-  "description": "N/A",
+  "description": "Add ability to attach document into email and add reply-to header. Fix issue in office365, if from email not registered as valid account in office356",
   "require": {
     "php": ">=7.0.0"
   },
   "type": "magento2-module",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "license": [
     "OSL-3.0",
     "AFL-3.0"

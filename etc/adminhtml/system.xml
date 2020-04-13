@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+
+<!--
+/**
+ * Xtendable_MailAttachment
+ *
+ * @see    README.md
+ * @author Didi Kusnadi<jalapro08@gmail.com>
+ *
+ */
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="system">
+            <group id="smtp">
+                <field id="domain_validation" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Enable Sender Domain Validation</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>In Office365 domain in from sender address should registered. By enable this, sender address will replaced to general email.</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

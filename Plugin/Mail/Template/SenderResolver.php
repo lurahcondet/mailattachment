@@ -39,6 +39,13 @@ class SenderResolver
      */
     public function afterResolve(\Magento\Email\Model\Template\SenderResolver $subject, $result)
     {
+        if(!$this->scopeConfig->getValue(
+            'system/smtp/domain_validation',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        )){
+           return $result; 
+        }
+
         $identityAddress = $this->scopeConfig->getValue(
             'trans_email/ident_general/email',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
